@@ -91,7 +91,7 @@ def reset_game():
     # track game over state
     game_over = False
 
-    hit_positions.clear()
+    hit_positions.empty()
     score = 0
     hit_x = 0
     hit_y = 0
