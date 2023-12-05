@@ -203,12 +203,10 @@ while running:
                 if arrow_x > width or (target_x - arrow_x <= target_radius):
                     arrow_fired = False
                     arrow_moving = False
-                    print("arrow shooting = ", arrow_shooting)
                     if arrow_shooting:                       
                         # Add the hit position to the list and calculate score
                         mark_color = get_mark_color(hit_deviation)
                         hit_positions.append((hit_x, hit_y, mark_color))
-                        print("hit positions", hit_positions)
                         score += calculate_score(hit_deviation)
                         arrow_shooting = False  # Stop shooting
                         
