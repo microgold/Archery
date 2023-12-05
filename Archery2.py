@@ -30,29 +30,33 @@ LIGHTGRAY = (200, 200, 200)
 target_x, target_y = width - 100, height // 2 + 50
 target_radius = 50
 
-# Archer settings
+# initialize the Archer
 archer_x, archer_y = 100, height // 2
 archer_img = pygame.image.load('Sprites/ArcherStrip.png')  # Load your sprite here
-arrow_img = pygame.image.load('Sprites/Arrow.png')  # Load your arrow sprite here
-
 archer = Archer(archer_img, (archer_x, archer_y))
 archer_width = 150
 
-# Arrow settings
+# Initialize the arrow
+arrow_img = pygame.image.load('Sprites/Arrow.png')  # Load your arrow sprite here
 arrow = Arrow(arrow_img, (archer_x + archer_width, archer_y + 55))
 arrow.speed = 10
 arrow.fired = False
 
+# Initialize the moving bar
 moving_bar = MovingBar((0, height - 50), width, height)
 
-#statistics settings
+# Initialize the arrow markers
+hit_positions = pygame.sprite.Group()
+
+#intitialize the statistics
 score_text = GameText('Score: 0', 36, BLACK, (100, 20))
 arrow_count_text = GameText(f'Arrows Left: {arrow.num_arrows}', 36, BLACK, (300, 20))
 game_over_text = GameText('Game Over', 36, RED, (width // 2 - 50, height // 2 - 20))
 play_again_text = GameText('Play Again? (y/n)', 36, GREEN, (width // 2 - 50, height // 2 + 10))
+game_over = False
 
+# initialize target
 target = Target((target_x, target_y), target_radius)
-
 
 def handle_arrow_firing():
     global hit_x, hit_y, bar_center
@@ -97,15 +101,9 @@ def reset_game():
     hit_y = 0
 
 
-# Get individual frames
+reset_game()
 
-# Track arrow states
-arrow.reset()
 
-# track game over state
-game_over = False
-
-hit_positions = pygame.sprite.Group()
 arrow_marker = None
 score = 0
 hit_x = 0
