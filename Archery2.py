@@ -1,6 +1,6 @@
 import pygame
 import random
-from Sprites import Archer, Arrow, Target
+from Sprites import Archer, Arrow, ArrowMarker, MovingBar, Target, GameText
 
 
 # Initialize Pygame
@@ -30,26 +30,26 @@ LIGHTGRAY = (200, 200, 200)
 target_x, target_y = width - 100, height // 2 + 50
 target_radius = 50
 
-# Bar settings
-bar_width, bar_height = 200, 20
-bar_x, bar_y = (width - bar_width) // 2, height - 50
-button_width, button_height = 20, 20
-button_x, button_y = bar_x, bar_y
-button_speed = 5
-button_direction = 1
-
 # Archer settings
 archer_x, archer_y = 100, height // 2
 archer_img = pygame.image.load('Sprites/ArcherStrip.png')  # Load your sprite here
 arrow_img = pygame.image.load('Sprites/Arrow.png')  # Load your arrow sprite here
 
 archer = Archer(archer_img, (archer_x, archer_y))
-
-
 archer_width = 150
+
+# Arrow settings
 arrow = Arrow(arrow_img, (archer_x + archer_width, archer_y + 55))
 arrow.speed = 10
 arrow.fired = False
+
+moving_bar = MovingBar((0, height - 50), width, height)
+
+#statistics settings
+score_text = GameText('Score: 0', 36, BLACK, (100, 20))
+arrow_count_text = GameText(f'Arrows Left: {arrow.num_arrows}', 36, BLACK, (300, 20))
+game_over_text = GameText('Game Over', 36, RED, (width // 2 - 50, height // 2 - 20))
+play_again_text = GameText('Play Again? (y/n)', 36, GREEN, (width // 2 - 50, height // 2 + 10))
 
 target = Target((target_x, target_y), target_radius)
 
@@ -63,8 +63,8 @@ def handle_arrow_firing():
     archer.animation_counter = 0
     
     # Determine the hit position
-    bar_center = bar_x + bar_width // 2
-    bar_position_ratio = (button_x - bar_x) / bar_width
+    bar_center = moving_bar.bar_x + moving_bar.bar_width // 2
+    bar_position_ratio = ( moving_bar.button_x -  moving_bar.bar_x) /  moving_bar.bar_width
     hit_position_ratio = (2 * bar_position_ratio - 1)  # -1 (left) to 1 (right)
 
     # Calculate the hit position on the target
@@ -82,7 +82,6 @@ def handle_arrow_firing():
     return hit_deviation
 
 
-
 def reset_game():
     global hit_positions, score, hit_x, hit_y
     
@@ -92,7 +91,7 @@ def reset_game():
     # track game over state
     game_over = False
 
-    hit_positions = []
+    hit_positions.clear()
     score = 0
     hit_x = 0
     hit_y = 0
@@ -106,7 +105,8 @@ arrow.reset()
 # track game over state
 game_over = False
 
-hit_positions = []
+hit_positions = pygame.sprite.Group()
+arrow_marker = None
 score = 0
 hit_x = 0
 hit_y = 0
@@ -131,11 +131,6 @@ while running:
         
     if game_over: continue # Skip the rest of the game loop if game is over
 
-    # Update button position
-    button_x += button_speed * button_direction
-    if button_x < bar_x or button_x + button_width > bar_x + bar_width:
-        button_direction *= -1
-        
     # Collision detection
     arrow_x, arrow_y = arrow.position
     target_x, target_y = target.position
@@ -162,40 +157,37 @@ while running:
                         arrow.moving = False                   
                         # Add the hit position to the list and calculate score
                         mark_color = target.get_mark_color(hit_deviation)
-                        hit_positions.append((hit_x, hit_y, mark_color))
+                        arrow_marker = ArrowMarker((hit_x, hit_y), mark_color)
+                        hit_positions.add(arrow_marker)
                         score += target.calculate_score(hit_deviation)
                        
                          # Check for game over
                         if arrow.num_arrows <= 0:
-                            game_over_text = font.render("Game Over", True, RED)
-                            screen.blit(game_over_text, (width // 2 - 50, height // 2 - 20))    
-                            game_over = True
-                            
-                            play_again_text = font.render("Play Again? (y/n)", True, GREEN)
-                            screen.blit(play_again_text, (width // 2 - 50, height // 2 + 10))  # Adjust position as needed
+                            game_over_text.draw(screen)   
+                            game_over = True                            
+                            play_again_text.draw(screen)
     # Draw the target
     target.draw(screen)
     
-    # Inside the game loop, after drawing the target
-    for pos_x, pos_y, color in hit_positions:
-        pygame.draw.circle(screen, color, (int(pos_x), int(pos_y)), 5)  # Small dot for the hit
+    # display the arrow markers where they hit on the target
+    hit_positions.draw(screen)
+    
+    # Draw the moving bar
+    moving_bar.update()
+    moving_bar.draw(screen)
+        
 
     # Display the score
-    font = pygame.font.SysFont(None, 36)
-    score_text = font.render(f'Score: {score}', True, BLACK)
-    screen.blit(score_text, (10, 10))  # Position the score text on the screen
+    score_text.update_text(f'Score: {score}')
+    score_text.draw(screen)
     
     #Display the arrow count
-    arrow_count_text = font.render(f'Arrows Left: {arrow.num_arrows}', True, BLACK)
-    screen.blit(arrow_count_text, (10, 50))   
+    arrow_count_text.update_text(f'Arrows Left: {arrow.num_arrows}')
+    arrow_count_text.draw(screen)
 
    
-    # Draw the moving bar
-    pygame.draw.rect(screen, BLUE, (bar_x, bar_y, bar_width, bar_height))
-    pygame.draw.rect(screen, GREEN, (button_x, button_y, button_width, button_height))
 
     # Draw the archer
-    #screen.blit(archer_img, (archer_x, archer_y))
     archer.draw(screen)
 
     # Draw the arrow only if it's moving
