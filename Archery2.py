@@ -78,7 +78,6 @@ def handle_arrow_firing():
         max_offset = 3  # Smaller offset for closer to bullseye
     vertical_offset = random.uniform(-max_offset, max_offset)
     hit_y = target_y + vertical_offset
-    print("dec arrows")
     arrow.decrement_arrows() # Decrement the arrow count
     return hit_deviation
 
@@ -126,7 +125,6 @@ while running:
             if game_over and event.key == pygame.K_n:
                 running = False
             if event.key == pygame.K_SPACE and not arrow.fired:
-                print("arrow firing")
                 archer.current_frame = 0
                 hit_deviation = handle_arrow_firing()
                
@@ -146,7 +144,6 @@ while running:
     distance_to_target = ((arrow_x - target_x)**2 + (arrow_y - target_y)**2)**0.5
     if distance_to_target <= target.radius and arrow.moving:
         arrow.moving = False
-        arrow.embedded = True
 
     # Update arrow position
     if arrow.fired:
@@ -160,15 +157,14 @@ while running:
             else:
                 arrow.update()
                 if arrow_x > width or (target_x - arrow_x <= target_radius):
-                    arrow.fired = False
-                    arrow.moving = False
-                    if arrow.shooting:                       
+                    if arrow.moving:   
+                        arrow.fired = False
+                        arrow.moving = False                   
                         # Add the hit position to the list and calculate score
                         mark_color = target.get_mark_color(hit_deviation)
                         hit_positions.append((hit_x, hit_y, mark_color))
                         score += target.calculate_score(hit_deviation)
-                        arrow.shooting = False  # Stop shooting
-                        
+                       
                          # Check for game over
                         if arrow.num_arrows <= 0:
                             game_over_text = font.render("Game Over", True, RED)
@@ -177,18 +173,6 @@ while running:
                             
                             play_again_text = font.render("Play Again? (y/n)", True, GREEN)
                             screen.blit(play_again_text, (width // 2 - 50, height // 2 + 10))  # Adjust position as needed
-                            
-                    arrow.fired = False
-                    arrow.moving = False
-                    arrow.embedded = True  # Arrow is now embedded
-                    
-            # Arrow has hit the target
-            if not arrow.embedded:
-                arrow.embedded = True  # Flag to indicate arrow is embedded in the target
-                    
-    else:
-        arrow.embedded = False
-
     # Draw the target
     target.draw(screen)
     
@@ -202,7 +186,6 @@ while running:
     screen.blit(score_text, (10, 10))  # Position the score text on the screen
     
     #Display the arrow count
-    print("number of arrows: ", arrow.num_arrows)
     arrow_count_text = font.render(f'Arrows Left: {arrow.num_arrows}', True, BLACK)
     screen.blit(arrow_count_text, (10, 50))   
 

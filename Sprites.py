@@ -57,9 +57,7 @@ class Arrow(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=position)
         self.speed = 10
         self.fired = True
-        self.shooting = True  # Start shooting
         self.moving = False  # New variable to track arrow movement
-        self.embedded = False  # New variable to track arrow embedding
         self.num_arrows = 10  # Number of arrows per game
 
     def initial_update(self, archer_x, archer_y, archer_width):
@@ -75,8 +73,6 @@ class Arrow(pygame.sprite.Sprite):
     def reset(self):
         self.moving = False
         self.fired = False
-        self.shooting = False  # Start shooting
-        self.embedded = False  # New variable to track arrow embedding
         self.position = self.starting_position
     
     def decrement_arrows(self):
@@ -84,8 +80,6 @@ class Arrow(pygame.sprite.Sprite):
         
     def fire(self):
         self.fired = True
-        self.shooting = True
-        self.embedded = False
         self.moving = False
     
     def draw(self, screen):
