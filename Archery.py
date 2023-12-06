@@ -1,5 +1,7 @@
 import pygame
 import random
+from Sprites import Archer, Arrow, ArrowMarker, MovingBar, Target, GameText
+
 
 # Initialize Pygame
 pygame.init()
@@ -28,110 +30,96 @@ LIGHTGRAY = (200, 200, 200)
 target_x, target_y = width - 100, height // 2 + 50
 target_radius = 50
 
-# Bar settings
-bar_width, bar_height = 200, 20
-bar_x, bar_y = (width - bar_width) // 2, height - 50
-button_width, button_height = 20, 20
-button_x, button_y = bar_x, bar_y
-button_speed = 5
-button_direction = 1
-
-# Archer settings
+# initialize the Archer
 archer_x, archer_y = 100, height // 2
-archer_img = pygame.image.load('Sprites/Archer.png')  # Load your sprite here
-arrow_img = pygame.image.load('Sprites/Arrow.png')  # Load your arrow sprite here
-arrow_speed = 10
-arrow_fired = False
+archer_img = pygame.image.load('Sprites/ArcherStrip.png')  # Load your sprite here
+archer = Archer(archer_img, (archer_x, archer_y))
 archer_width = 150
 
-arrow_x, arrow_y = archer_x + archer_width, archer_y + 55
-
-def draw_target():
-    # Draw the target with multiple concentric circles
-    target_radius = 50  # Outermost circle radius
-    colors = [WHITE, BLACK, BLUE, RED, YELLOW]  # Colors from outer to inner
-
-    for i, color in enumerate(colors):
-        pygame.draw.circle(screen, color, (target_x, target_y), target_radius - i * 10)
 
 
-def get_frames(image, frame_width, frame_height, num_frames):
-    frames = []
-    for i in range(num_frames):
-        frame = image.subsurface(pygame.Rect(i * frame_width, 0, frame_width, frame_height))
-        frames.append(frame)
-    return frames
+#initialize background music
+pygame.mixer.init()
+pygame.mixer.music.set_volume(0.5)
+pygame.mixer.music.load('Music/background.mp3')
 
-def calculate_score(deviation):
-    abs_deviation = abs(deviation)
-    if abs_deviation <= target_radius * 0.2:  # Bullseye
-        return 10
-    elif abs_deviation <= target_radius * 0.4:
-        return 5
-    elif abs_deviation <= target_radius * 0.6:
-        return 3
-    elif abs_deviation <= target_radius:
-        return 1
-    else:
-        return 0  # Missed the target
+#initialize sound effects
+arrow_sound = pygame.mixer.Sound('Sounds/arrow.mp3')
+
+# Initialize the arrow
+arrow_img = pygame.image.load('Sprites/Arrow.png')  # Load your arrow sprite here
+arrow = Arrow(arrow_img, (archer_x + archer_width, archer_y + 55))
+arrow.speed = 10
+arrow.fired = False
+
+# Initialize the moving bar
+moving_bar = MovingBar((0, height - 50), width, height)
+
+# Initialize the arrow markers
+hit_positions = pygame.sprite.Group()
+
+#intitialize the statistics
+score_text = GameText('Score: 0', 36, BLACK, (100, 20))
+arrow_count_text = GameText(f'Arrows Left: {arrow.num_arrows}', 36, BLACK, (300, 20))
+game_over_text = GameText('Game Over', 36, RED, (width // 2 - 50, height // 2 - 20))
+play_again_text = GameText('Play Again? (y/n)', 36, GREEN, (width // 2 - 50, height // 2 + 10))
+game_over = False
+
+# initialize target
+target = Target((target_x, target_y), target_radius)
+
+def handle_arrow_firing():
+    global hit_x, hit_y, bar_center
     
-def get_mark_color(hit_deviation):
-    # Function to determine the color of the mark based on the hit deviation
-    if abs(hit_deviation) <= target_radius * 0.2:  # Bullseye (Yellow)
-        return BLACK  # Black mark for visibility
-    elif abs(hit_deviation) <= target_radius * 0.4:  # Red
-        return LIGHTGRAY  # White or grey mark for visibility
-    elif abs(hit_deviation) <= target_radius * 0.6:  # Blue
-        return LIGHTGRAY  # Black mark should be visible on blue
-    elif abs(hit_deviation) <= target_radius * 0.8:  # BLACK
-        return LIGHTGRAY  # Black mark should be visible on blue
-    else:  # Black or White ring
-        return LIGHTGRAY  # White mark for visibility on blac
+    arrow.reset()
+    arrow.fire()
+    archer.current_frame = 0
+    archer.animation_counter = 0
+    
+    # Determine the hit position
+    bar_center = moving_bar.bar_x + moving_bar.bar_width // 2
+    bar_position_ratio = ( moving_bar.button_x -  moving_bar.bar_x) /  moving_bar.bar_width
+    hit_position_ratio = (2 * bar_position_ratio - 1)  # -1 (left) to 1 (right)
+
+    # Calculate the hit position on the target
+    hit_deviation = hit_position_ratio * target.radius # Distance from bullseye
+    target_x, target_y = target.position
+    hit_x = target_x + hit_deviation
+    # Adjust vertical offset based on proximity to bullseye
+    max_offset = 5  # Maximum vertical offset
+    abs_deviation = abs(hit_deviation)
+    if abs_deviation <= target_radius * 0.4:
+        max_offset = 3  # Smaller offset for closer to bullseye
+    vertical_offset = random.uniform(-max_offset, max_offset)
+    hit_y = target_y + vertical_offset
+    arrow.decrement_arrows() # Decrement the arrow count
+    return hit_deviation
+
 
 def reset_game():
-    global arrow_fired, arrow_moving, arrow_embedded, arrow_missed, arrow_shooting, num_arrows, hit_positions, score, hit_x, hit_y
-    arrow_fired = False
-    arrow_moving = False
-    arrow_embedded = False
-    arrow_missed = False
-    arrow_shooting = False  # Add a new flag for arrow shooting
-    num_arrows = 10  # Number of arrows per game
-
+    global hit_positions, score, hit_x, hit_y, game_over
+    
+    arrow.reset()
+    arrow.num_arrows = 10
+    archer.reset()
     # track game over state
     game_over = False
 
-    hit_positions = []
+    hit_positions.empty()
     score = 0
     hit_x = 0
     hit_y = 0
 
-archer_strip_img = pygame.image.load('Sprites/ArcherStrip.png')  # Load your sprite strip here
-frame_width, frame_height = archer_strip_img.get_width() // 5, archer_strip_img.get_height()
-num_frames = 5
 
-# Animation control
-animation_speed = 5  # Adjust this value to control the speed of the animation
-animation_counter = 0
+reset_game()
 
-# Get individual frames
-archer_frames = get_frames(archer_strip_img, frame_width, frame_height, num_frames)
-current_frame = 0
 
-# Track arrow states
-arrow_moving = False
-arrow_embedded = False
-arrow_missed = False
-arrow_shooting = False  # Add a new flag for arrow shooting
-num_arrows = 10  # Number of arrows per game
-
-# track game over state
-game_over = False
-
-hit_positions = []
+arrow_marker = None
 score = 0
 hit_x = 0
 hit_y = 0
 
+pygame.mixer.music.play(-1)
 while running:
     screen.fill(GRAY)
 
@@ -145,125 +133,76 @@ while running:
                 reset_game()
             if game_over and event.key == pygame.K_n:
                 running = False
-            if event.key == pygame.K_SPACE and not arrow_fired:
-                arrow_fired = True
-                arrow_shooting = True  # Start shooting
-                arrow_moving = False  # New variable to track arrow movement
-                arrow_embedded = False  # New variable to track arrow embedding
-                current_frame = 0
-                animation_counter = 0
-                
-               # Determine the hit position
-                bar_center = bar_x + bar_width // 2
-                bar_position_ratio = (button_x - bar_x) / bar_width
-                hit_position_ratio = (2 * bar_position_ratio - 1)  # -1 (left) to 1 (right)
-
-                # Calculate the hit position on the target
-                hit_deviation = hit_position_ratio * target_radius # Distance from bullseye
-                hit_x = target_x + hit_deviation
-               # Adjust vertical offset based on proximity to bullseye
-                max_offset = 5  # Maximum vertical offset
-                abs_deviation = abs(hit_deviation)
-                if abs_deviation <= target_radius * 0.4:
-                    max_offset = 3  # Smaller offset for closer to bullseye
-                vertical_offset = random.uniform(-max_offset, max_offset)
-                hit_y = target_y + vertical_offset
-                num_arrows -= 1  # Decrement the arrow count
+            if event.key == pygame.K_SPACE and not arrow.fired:
+                archer.current_frame = 0
+                hit_deviation = handle_arrow_firing()
+                # play arrow sound
+                arrow_sound.play()
+               
         
     if game_over: continue # Skip the rest of the game loop if game is over
 
-    # Update button position
-    button_x += button_speed * button_direction
-    if button_x < bar_x or button_x + button_width > bar_x + bar_width:
-        button_direction *= -1
-        
     # Collision detection
+    arrow_x, arrow_y = arrow.position
+    target_x, target_y = target.position
+    archer_x, archer_y = archer.position
+    
     distance_to_target = ((arrow_x - target_x)**2 + (arrow_y - target_y)**2)**0.5
-    if distance_to_target <= target_radius and arrow_moving:
-        arrow_moving = False
-        arrow_embedded = True  # New variable to         
+    if distance_to_target <= target.radius and arrow.moving:
+        arrow.moving = False
 
     # Update arrow position
-    if arrow_fired:
-        if current_frame < num_frames:
-            if animation_counter >= animation_speed:
-                archer_img = archer_frames[current_frame]
-                current_frame += 1
-                animation_counter = 0  # Reset counter after updating frame
-            animation_counter += 1
-        else:
-            
+    if arrow.fired:
+        if archer.current_frame < archer.num_frames:
+            archer.animate()
+        else:            
             # Once animation is done, start moving the arrow
-            if not arrow_moving:
-                arrow_x, arrow_y = archer_x + archer_width, archer_y + 55 # Reset arrow position
-                arrow_moving = True
-
-            if arrow_moving:
-                arrow_x += arrow_speed
+            if not arrow.moving:
+                arrow.initial_update()                
+                arrow.moving = True
+            else:
+                arrow.update()
                 if arrow_x > width or (target_x - arrow_x <= target_radius):
-                    arrow_fired = False
-                    arrow_moving = False
-                    if arrow_shooting:                       
+                    if arrow.moving:   
+                        arrow.fired = False
+                        arrow.moving = False                   
                         # Add the hit position to the list and calculate score
-                        mark_color = get_mark_color(hit_deviation)
-                        hit_positions.append((hit_x, hit_y, mark_color))
-                        score += calculate_score(hit_deviation)
-                        arrow_shooting = False  # Stop shooting
-                        
+                        mark_color = target.get_mark_color(hit_deviation)
+                        arrow_marker = ArrowMarker((hit_x, hit_y), mark_color)
+                        hit_positions.add(arrow_marker)
+                        score += target.calculate_score(hit_deviation)
+                       
                          # Check for game over
-                        if num_arrows <= 0:
-                            game_over_text = font.render("Game Over", True, RED)
-                            screen.blit(game_over_text, (width // 2 - 50, height // 2 - 20))    
-                            game_over = True
-                            
-                            play_again_text = font.render("Play Again? (y/n)", True, GREEN)
-                            screen.blit(play_again_text, (width // 2 - 50, height // 2 + 10))  # Adjust position as needed
-                            
-                    arrow_fired = False
-                    arrow_moving = False
-                    arrow_embedded = True  # Arrow is now embedded
-                    
-            # Arrow has hit the target
-            if not arrow_embedded:
-                arrow_embedded = True  # Flag to indicate arrow is embedded in the target
-                    
-    else:
-        archer_img = archer_frames[0]  # Reset to default frame
-        arrow_embedded = False
-
+                        if arrow.num_arrows <= 0:
+                            game_over_text.draw(screen)   
+                            game_over = True                            
+                            play_again_text.draw(screen)
     # Draw the target
-    draw_target()
+    target.draw(screen)
     
-    # Inside the game loop, after drawing the target
-    for pos_x, pos_y, color in hit_positions:
-        pygame.draw.circle(screen, color, (int(pos_x), int(pos_y)), 5)  # Small dot for the hit
+    # display the arrow markers where they hit on the target
+    hit_positions.draw(screen)
+    
+    # Draw the moving bar
+    moving_bar.update()
+    moving_bar.draw(screen)
+        
 
     # Display the score
-    font = pygame.font.SysFont(None, 36)
-    score_text = font.render(f'Score: {score}', True, BLACK)
-    screen.blit(score_text, (10, 10))  # Position the score text on the screen
+    score_text.update_text(f'Score: {score}')
+    score_text.draw(screen)
     
     #Display the arrow count
-    arrow_count_text = font.render(f'Arrows Left: {num_arrows}', True, BLACK)
-    screen.blit(arrow_count_text, (10, 50))
-
-   
-
-    
-    # Drawing the arrow
-    if arrow_embedded and not game_over:
-        screen.blit(arrow_img, (arrow_x, arrow_y))
-
-    # Draw the moving bar
-    pygame.draw.rect(screen, BLUE, (bar_x, bar_y, bar_width, bar_height))
-    pygame.draw.rect(screen, GREEN, (button_x, button_y, button_width, button_height))
+    arrow_count_text.update_text(f'Arrows Left: {arrow.num_arrows}')
+    arrow_count_text.draw(screen)   
 
     # Draw the archer
-    screen.blit(archer_img, (archer_x, archer_y))
+    archer.draw(screen)
 
     # Draw the arrow only if it's moving
-    if arrow_moving:
-        screen.blit(arrow_img, (arrow_x, arrow_y))
+    if arrow.moving:
+        arrow.draw(screen)
+        # screen.blit(arrow_img, (arrow_x, arrow_y))
 
     pygame.display.flip()
     clock.tick(fps)
