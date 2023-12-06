@@ -36,6 +36,16 @@ archer_img = pygame.image.load('Sprites/ArcherStrip.png')  # Load your sprite he
 archer = Archer(archer_img, (archer_x, archer_y))
 archer_width = 150
 
+
+
+#initialize background music
+pygame.mixer.init()
+pygame.mixer.music.set_volume(0.5)
+pygame.mixer.music.load('Music/background.mp3')
+
+#initialize sound effects
+arrow_sound = pygame.mixer.Sound('Sounds/arrow.mp3')
+
 # Initialize the arrow
 arrow_img = pygame.image.load('Sprites/Arrow.png')  # Load your arrow sprite here
 arrow = Arrow(arrow_img, (archer_x + archer_width, archer_y + 55))
@@ -87,7 +97,7 @@ def handle_arrow_firing():
 
 
 def reset_game():
-    global hit_positions, score, hit_x, hit_y
+    global hit_positions, score, hit_x, hit_y, game_over
     
     arrow.reset()
     arrow.num_arrows = 10
@@ -109,6 +119,7 @@ score = 0
 hit_x = 0
 hit_y = 0
 
+pygame.mixer.music.play(-1)
 while running:
     screen.fill(GRAY)
 
@@ -125,6 +136,8 @@ while running:
             if event.key == pygame.K_SPACE and not arrow.fired:
                 archer.current_frame = 0
                 hit_deviation = handle_arrow_firing()
+                # play arrow sound
+                arrow_sound.play()
                
         
     if game_over: continue # Skip the rest of the game loop if game is over
@@ -145,7 +158,7 @@ while running:
         else:            
             # Once animation is done, start moving the arrow
             if not arrow.moving:
-                arrow.initial_update(archer_x, archer_y, archer_width)                
+                arrow.initial_update()                
                 arrow.moving = True
             else:
                 arrow.update()
@@ -181,9 +194,7 @@ while running:
     
     #Display the arrow count
     arrow_count_text.update_text(f'Arrows Left: {arrow.num_arrows}')
-    arrow_count_text.draw(screen)
-
-   
+    arrow_count_text.draw(screen)   
 
     # Draw the archer
     archer.draw(screen)

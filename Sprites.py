@@ -60,7 +60,7 @@ class Arrow(pygame.sprite.Sprite):
         self.moving = False  # New variable to track arrow movement
         self.num_arrows = 10  # Number of arrows per game
 
-    def initial_update(self, archer_x, archer_y, archer_width):
+    def initial_update(self):
         if self.moving:
             self.position = self.starting_position
     
@@ -97,15 +97,15 @@ class ArrowMarker(pygame.sprite.Sprite):
 class Target(pygame.sprite.Sprite):
     def __init__(self, position, radius):
         super().__init__()
+        colors = [WHITE, BLACK, BLUE, RED, YELLOW]
         self.position = position
         self.radius = radius
         self.image = pygame.Surface((radius*2, radius*2), pygame.SRCALPHA)
         self.rect = self.image.get_rect(center=position)
-
-    def draw(self, screen):
-        colors = [WHITE, BLACK, BLUE, RED, YELLOW]
         for i, color in enumerate(colors):
             pygame.draw.circle(self.image, color, (self.radius, self.radius), self.radius - i * 10)
+
+    def draw(self, screen):       
             screen.blit(self.image, self.rect)
     
     def get_mark_color(self, hit_deviation):
