@@ -32,7 +32,8 @@ target_radius = 50
 
 # initialize the Archer
 archer_x, archer_y = 100, height // 2
-archer_img = pygame.image.load('Sprites/ArcherStrip.png')  # Load your sprite here
+archer_img = pygame.image.load('Sprites/ArcherStripTransparent.png')  # Load your sprite here
+background_img = pygame.image.load('Sprites/background.png')
 archer = Archer(archer_img, (archer_x, archer_y))
 archer_width = 150
 
@@ -125,6 +126,7 @@ hit_y = 0
 pygame.mixer.music.play(-1)
 while running:
     screen.fill(GRAY)
+    screen.blit(background_img, (0, 0))
 
     # Event handling
     for event in pygame.event.get():
