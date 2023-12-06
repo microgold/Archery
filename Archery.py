@@ -77,8 +77,10 @@ def handle_arrow_firing():
     archer.animation_counter = 0
     
     # Determine the hit position
-    bar_center = moving_bar.bar_x + moving_bar.bar_width // 2
-    bar_position_ratio = ( moving_bar.button_x -  moving_bar.bar_x) /  moving_bar.bar_width
+    bar_center = moving_bar.bar_x + moving_bar.bar_width / 2
+    # Calculate the midpoint of the button
+    button_midpoint = moving_bar.button_x + moving_bar.button_width / 2
+    bar_position_ratio = ( button_midpoint -  moving_bar.bar_x) /  moving_bar.bar_width
     hit_position_ratio = (2 * bar_position_ratio - 1)  # -1 (left) to 1 (right)
 
     # Calculate the hit position on the target
@@ -93,6 +95,7 @@ def handle_arrow_firing():
     vertical_offset = random.uniform(-max_offset, max_offset)
     hit_y = target_y + vertical_offset
     arrow.decrement_arrows() # Decrement the arrow count
+   
     return hit_deviation
 
 

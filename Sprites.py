@@ -8,7 +8,8 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 BLACK = (0, 0, 0)
 YELLOW = (255, 255, 0)
-LIGHTGRAY = (200, 200, 200)
+LIGHTGRAY = (240, 240, 240)
+DARKGRAY = (100, 100, 100)
 
 
 
@@ -119,7 +120,7 @@ class Target(pygame.sprite.Sprite):
         elif abs(hit_deviation) <= self.radius * 0.8:  # BLACK
             return LIGHTGRAY  # Black mark should be visible on blue
         else:  # Black or White ring
-            return LIGHTGRAY  # White mark for visibility on blac
+            return DARKGRAY  # White mark for visibility on blac
             
     def calculate_score(self, deviation):
         abs_deviation = abs(deviation)
