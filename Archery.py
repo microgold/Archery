@@ -32,12 +32,10 @@ target_radius = 50
 
 # initialize the Archer
 archer_x, archer_y = 100, height // 2
-archer_img = pygame.image.load('Sprites/ArcherStripTransparent.png')  # Load your sprite here
+archer_img = pygame.image.load('Sprites/ArcherStrip.png')  # Load your sprite here
 background_img = pygame.image.load('Sprites/background.png')
 archer = Archer(archer_img, (archer_x, archer_y))
 archer_width = 150
-
-
 
 #initialize background music
 pygame.mixer.init()
@@ -114,9 +112,7 @@ def reset_game():
     hit_x = 0
     hit_y = 0
 
-
 reset_game()
-
 
 arrow_marker = None
 score = 0
@@ -197,7 +193,7 @@ while running:
     score_text.update_text(f'Score: {score}')
     score_text.draw(screen)
     
-    #Display the arrow count
+    # Display the arrow count
     arrow_count_text.update_text(f'Arrows Left: {arrow.num_arrows}')
     arrow_count_text.draw(screen)   
 
