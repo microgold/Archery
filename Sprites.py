@@ -1,5 +1,6 @@
 __package__ = "ArcherGame"
 import pygame
+from enum import Enum
 
 WHITE = (255, 255, 255)
 GRAY = (227, 228, 221)
@@ -11,7 +12,10 @@ YELLOW = (255, 255, 0)
 LIGHTGRAY = (240, 240, 240)
 DARKGRAY = (100, 100, 100)
 
-
+class ArrowStates(Enum):
+    READY = 1
+    FIRED = 2
+    MOVING = 3
 
 
 class Archer(pygame.sprite.Sprite):
@@ -57,32 +61,29 @@ class Arrow(pygame.sprite.Sprite):
         self.starting_position = position
         self.rect = self.image.get_rect(topleft=position)
         self.speed = 10
-        self.fired = True
-        self.moving = False  # New variable to track arrow movement
+        self.arrow_state = ArrowStates.READY
         self.num_arrows = 10  # Number of arrows per game
-
+        
     def initial_update(self):
-        if self.moving:
+        if self.arrow_state == ArrowStates.MOVING:
             self.position = self.starting_position
     
     def update(self):
-        if self.moving:
+        if self.arrow_state == ArrowStates.MOVING:
             (x,y) = self.position
             self.position = (x + self.speed, y)
             self.rect = self.image.get_rect(topleft=self.position)
     
     def reset(self):
-        self.moving = False
-        self.fired = False
+        arrow_state = ArrowStates.READY
         self.position = self.starting_position
     
     def decrement_arrows(self):
         self.num_arrows -= 1
         
     def fire(self):
-        self.fired = True
-        self.moving = False
-    
+        self.arrow_state = ArrowStates.FIRED
+        
     def draw(self, screen):
         screen.blit(self.image, self.rect)
         
@@ -198,5 +199,3 @@ class GameText (pygame.sprite.Sprite):
     def draw(self, screen):
         screen.blit(self.image, self.rect)
 
-# archer_strip_img = pygame.image.load('Sprites/ArcherStrip.png')  # Load your sprite strip here
-# archer = Archer(archer_strip_img, (0, 0))

@@ -1,6 +1,6 @@
 import pygame
 import random
-from Sprites import Archer, Arrow, ArrowMarker, MovingBar, Target, GameText, Stand
+from Sprites import Archer, Arrow, ArrowMarker, MovingBar, Target, GameText, Stand, ArrowStates
 
 
 # Initialize Pygame
@@ -33,8 +33,8 @@ target_radius = 50
 
 # initialize the Archer
 archer_x, archer_y = 100, height // 2
-archer_img = pygame.image.load('Sprites/ArcherStrip.png')  # Load your sprite here
-background_img = pygame.image.load('Sprites/background.png')
+archer_img = pygame.image.load('Images/ArcherStrip.png')  # Load your sprite here
+background_img = pygame.image.load('Images/background.png')
 archer = Archer(archer_img, (archer_x, archer_y))
 archer_width = 150
 
@@ -49,10 +49,9 @@ cheer_sound = pygame.mixer.Sound('Sounds/cheer.wav')
 
 
 # Initialize the arrow
-arrow_img = pygame.image.load('Sprites/Arrow.png')  # Load your arrow sprite here
+arrow_img = pygame.image.load('Images/Arrow.png')  # Load your arrow sprite here
 arrow = Arrow(arrow_img, (archer_x + archer_width, archer_y + 55))
 arrow.speed = 10
-arrow.fired = False
 
 # Initialize the moving bar
 moving_bar = MovingBar((0, height - 50), width, height)
@@ -71,7 +70,7 @@ game_over = False
 target = Target((target_x, target_y), target_radius)
 
 # initialize Target Stand
-stand_image =  pygame.image.load('Sprites/stand.png')
+stand_image =  pygame.image.load('Images/stand.png')
 stand_image = pygame.transform.scale(stand_image, (200, 200))
 stand = Stand(stand_image, (target_x + 5, target_y + 60), 100, 100)
 
@@ -106,6 +105,8 @@ def handle_arrow_firing():
     # determine if we hit the bullseye and set the flag
     if abs_deviation <= target_radius * 0.1:
         bullseye_flag = True
+        
+    print('arrow state firing ', arrow.arrow_state)
         
     return hit_deviation
 
@@ -146,7 +147,7 @@ while running:
                 reset_game()
             if game_over and event.key == pygame.K_n:
                 running = False
-            if event.key == pygame.K_SPACE and not arrow.fired:
+            if event.key == pygame.K_SPACE and arrow.arrow_state != ArrowStates.FIRED:
                 archer.current_frame = 0
                 hit_deviation = handle_arrow_firing()
                 # play arrow sound
@@ -161,41 +162,43 @@ while running:
     archer_x, archer_y = archer.position
     
     distance_to_target = ((arrow_x - target_x)**2 + (arrow_y - target_y)**2)**0.5
-    if distance_to_target <= target.radius and arrow.moving:
-        arrow.moving = False
-
-    # Update arrow position
-    if arrow.fired:
+    if distance_to_target <= target.radius and arrow.arrow_state == ArrowStates.MOVING:
+        arrow.arrow_state = ArrowStates.READY
+        
+        print('arrow state ', arrow.arrow_state)
+        
+    if arrow.arrow_state == ArrowStates.READY: 
+        pass
+    elif arrow.arrow_state == ArrowStates.FIRED: 
         if archer.current_frame < archer.num_frames:
             archer.animate()
-        else:            
-            # Once animation is done, start moving the arrow
-            if not arrow.moving:
-                arrow.initial_update()                
-                arrow.moving = True
-            else:
-                arrow.update()
-                if arrow_x > width or (target_x - arrow_x <= target_radius):
-                    if arrow.moving:   
-                        arrow.fired = False
-                        arrow.moving = False                   
-                        # Add the hit position to the list and calculate score
-                        mark_color = target.get_mark_color(hit_deviation)
-                        arrow_marker = ArrowMarker((hit_x, hit_y), mark_color)
-                        hit_positions.add(arrow_marker)
-                        score += target.calculate_score(hit_deviation)
-                        
-                        # if bullseye flag is set, cheer
-                        if bullseye_flag:
-                            bullseye_flag = False
-                            cheer_sound.play()
-                       
-                         # Check for game over
-                        if arrow.num_arrows <= 0:
-                            game_over_text.draw(screen)   
-                            game_over = True                            
-                            play_again_text.draw(screen)
-                            
+        else:
+            arrow.initial_update() 
+            arrow.arrow_state = ArrowStates.MOVING
+    elif arrow.arrow_state == ArrowStates.MOVING: 
+            arrow.update()
+            if arrow_x > width or (target_x - arrow_x <= target_radius):
+                arrow.arrow_state = ArrowStates.READY                  
+                # Add the hit position to the list and calculate score
+                mark_color = target.get_mark_color(hit_deviation)
+                arrow_marker = ArrowMarker((hit_x, hit_y), mark_color)
+                hit_positions.add(arrow_marker)
+                score += target.calculate_score(hit_deviation)
+                
+                # if bullseye flag is set, cheer
+                if bullseye_flag:
+                    bullseye_flag = False
+                    cheer_sound.play()
+                
+                    # Check for game over
+                if arrow.num_arrows <= 0:
+                    game_over_text.draw(screen)   
+                    game_over = True                            
+                    play_again_text.draw(screen)
+        
+    
+
+                                
     # Draw the target stand
     stand.draw(screen)
     
@@ -224,7 +227,7 @@ while running:
     archer.draw(screen)
 
     # Draw the arrow only if it's moving
-    if arrow.moving:
+    if arrow.arrow_state == ArrowStates.MOVING:
         arrow.draw(screen)
         # screen.blit(arrow_img, (arrow_x, arrow_y))
 
