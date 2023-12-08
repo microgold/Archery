@@ -105,7 +105,13 @@ class Target(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=position)
         for i, color in enumerate(colors):
             pygame.draw.circle(self.image, color, (self.radius, self.radius), self.radius - i * 10)
+        # draw a black line around the outer edge of the target
+        pygame.draw.circle(self.image, BLACK, (self.radius, self.radius), self.radius, 1)
+        # draw a black circle outline inside the smallest circle of the target
+        pygame.draw.circle(self.image, BLACK, (self.radius, self.radius), self.radius * 0.1, 1)    
+        
 
+        
     def draw(self, screen):       
             screen.blit(self.image, self.rect)
     
@@ -124,16 +130,31 @@ class Target(pygame.sprite.Sprite):
             
     def calculate_score(self, deviation):
         abs_deviation = abs(deviation)
-        if abs_deviation <= self.radius * 0.2:  # Bullseye
+        if abs_deviation <= self.radius * 0.1:  # Bullseye
             return 10
-        elif abs_deviation <= self.radius * 0.4:
+        if abs_deviation <= self.radius * 0.2:  # Yellow
+            return 9
+        elif abs_deviation <= self.radius * 0.4: # Red
+            return 7
+        elif abs_deviation <= self.radius * 0.6: # Blue
             return 5
-        elif abs_deviation <= self.radius * 0.6:
-            return 3
-        elif abs_deviation <= self.radius:
-            return 1
+        elif abs_deviation <= self.radius: # Black
+            return 2
         else:
-            return 0  # Missed the target 
+            return 1  # white ring
+
+class Stand(pygame.sprite.Sprite):
+        def __init__(self, image, position, width, height):
+            super().__init__()
+            colors = [WHITE, BLACK, BLUE, RED, YELLOW]
+            self.position = position
+            self.width = width
+            self.height = height
+            self.image = image
+            self.rect = self.image.get_rect(center=position)
+
+        def draw(self, screen):       
+                screen.blit(self.image, self.rect)   
         
 class MovingBar (pygame.sprite.Sprite):
     def __init__(self, position, width, height):

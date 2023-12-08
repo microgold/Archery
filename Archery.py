@@ -1,6 +1,6 @@
 import pygame
 import random
-from Sprites import Archer, Arrow, ArrowMarker, MovingBar, Target, GameText
+from Sprites import Archer, Arrow, ArrowMarker, MovingBar, Target, GameText, Stand
 
 
 # Initialize Pygame
@@ -13,6 +13,7 @@ pygame.display.set_caption('Archery Game')
 
 # Game variables
 running = True
+bullseye_flag = False
 clock = pygame.time.Clock()
 fps = 60
 
@@ -20,7 +21,7 @@ fps = 60
 WHITE = (255, 255, 255)
 GRAY = (227, 228, 221)
 RED = (255, 0, 0)
-GREEN = (0, 255, 0)
+GREEN = (0, 128, 0)
 BLUE = (0, 0, 255)
 BLACK = (0, 0, 0)
 YELLOW = (255, 255, 0)
@@ -44,6 +45,8 @@ pygame.mixer.music.load('Music/background.mp3')
 
 #initialize sound effects
 arrow_sound = pygame.mixer.Sound('Sounds/arrow.mp3')
+cheer_sound = pygame.mixer.Sound('Sounds/cheer.wav')
+
 
 # Initialize the arrow
 arrow_img = pygame.image.load('Sprites/Arrow.png')  # Load your arrow sprite here
@@ -67,9 +70,14 @@ game_over = False
 # initialize target
 target = Target((target_x, target_y), target_radius)
 
+# initialize Target Stand
+stand_image =  pygame.image.load('Sprites/stand.png')
+stand_image = pygame.transform.scale(stand_image, (200, 200))
+stand = Stand(stand_image, (target_x + 5, target_y + 60), 100, 100)
+
 def handle_arrow_firing():
-    global hit_x, hit_y, bar_center
-    
+    global hit_x, hit_y, bar_center, bullseye_flag
+        
     arrow.reset()
     arrow.fire()
     archer.current_frame = 0
@@ -94,7 +102,11 @@ def handle_arrow_firing():
     vertical_offset = random.uniform(-max_offset, max_offset)
     hit_y = target_y + vertical_offset
     arrow.decrement_arrows() # Decrement the arrow count
-   
+    
+    # determine if we hit the bullseye and set the flag
+    if abs_deviation <= target_radius * 0.1:
+        bullseye_flag = True
+        
     return hit_deviation
 
 
@@ -172,14 +184,25 @@ while running:
                         arrow_marker = ArrowMarker((hit_x, hit_y), mark_color)
                         hit_positions.add(arrow_marker)
                         score += target.calculate_score(hit_deviation)
+                        
+                        # if bullseye flag is set, cheer
+                        if bullseye_flag:
+                            bullseye_flag = False
+                            cheer_sound.play()
                        
                          # Check for game over
                         if arrow.num_arrows <= 0:
                             game_over_text.draw(screen)   
                             game_over = True                            
                             play_again_text.draw(screen)
+                            
+    # Draw the target stand
+    stand.draw(screen)
+    
     # Draw the target
     target.draw(screen)
+    
+
     
     # display the arrow markers where they hit on the target
     hit_positions.draw(screen)
