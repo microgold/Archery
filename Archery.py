@@ -228,8 +228,7 @@ while running:
 
     # Draw the arrow only if it's moving
     if arrow.arrow_state == ArrowStates.MOVING:
-        arrow.draw(screen)
-        # screen.blit(arrow_img, (arrow_x, arrow_y))
+        arrow.draw(screen)        
 
     pygame.display.flip()
     clock.tick(fps)
