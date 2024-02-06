@@ -1,6 +1,7 @@
 __package__ = "ArcherGame"
 import pygame
 from enum import Enum
+import math
 
 WHITE = (255, 255, 255)
 GRAY = (227, 228, 221)
@@ -165,13 +166,42 @@ class MovingBar (pygame.sprite.Sprite):
         self.bar_x,  self.bar_y = (width - self.bar_width) // 2, height - 50
         self.button_width,  self.button_height = 20, 20
         self.button_x,  self.button_y = self.bar_x, self.bar_y
-        self.button_speed = 5
         self.button_direction = 1
-    
+        self.button_increment = 0
+        
+        
+        self.button_position = [  
+    1.0,          2.02248126,   3.11218166,   4.31316746,
+   5.66839299,   7.21927146,   9.00526119,  11.06347135,
+  13.42829116,  16.1310463 ,  19.19968592,  22.65850337,
+  26.52789347,  30.82414874,  35.5592966 ,  40.74097919,
+  46.37237704,  52.45217726,  58.97458669,  65.92938974,
+  73.3020505 ,  81.07385797,  89.222113  ,  97.7203551 ,
+ 106.53862682, 115.64377309, 124.99977248, 134.56809712,
+ 144.30809765, 154.17740939, 164.13237562, 174.1284838 ,
+ 184.12459198, 194.07955821, 203.94886995, 213.68887048,
+ 223.25719512, 232.61319451, 241.71834078, 250.5366125 ,
+ 259.0348546 , 267.18310963, 274.9549171 , 282.32757786,
+ 289.28238091, 295.80479034, 301.88459056, 307.51598841,
+ 312.697671  , 317.43281886, 321.72907413, 325.59846423,
+ 329.05728168, 332.1259213 , 334.82867644, 337.19349625,
+ 339.25170641, 341.03769614, 342.58857461, 343.94380014,
+ 345.14478594, 346.23448634, 347.2569676 , 348.2569676 ]
+
+      
     def update(self):
-        self.button_x += self.button_speed * self.button_direction
-        if self.button_x < self.bar_x or self.button_x + self.button_width > self.bar_x + self.bar_width:
-           self.button_direction *= -1
+        self.button_increment += self.button_direction
+       
+        if (self.button_increment < 0): 
+            self.button_increment = 0
+            self.button_direction = 1
+            
+        if  self.button_increment > len(self.button_position) - 1: 
+            self.button_increment = len(self.button_position) - 1
+            self.button_direction = -1
+
+        self.button_x = int (self.bar_x +  float(self.button_position[self.button_increment]) * float(self.bar_width) / 385.0)
+        
     
     
     def draw(self, screen):
